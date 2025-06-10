@@ -76,11 +76,8 @@ def _safe_write_parquet(ds: datasets.Dataset, target: Path) -> None:
 def _overwrite_episode_stats(
     dataset_dir: Path, episodes_stats: dict[int, dict]
 ) -> None:
-    print("Updating episodes stats...")
     eps_stats = load_episodes_stats(dataset_dir)
-    print(f"Current episodes stats: {eps_stats}")
     eps_stats.update(episodes_stats)
-    print(f"New episodes stats: {eps_stats}")
     # remove previous file
     (dataset_dir / EPISODES_STATS_PATH).unlink(missing_ok=True)
     
