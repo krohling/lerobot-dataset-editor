@@ -22,11 +22,14 @@ from lerobot.common.datasets.compute_stats import aggregate_stats, compute_episo
 from lerobot.common.datasets.utils import (
     INFO_PATH,
     STATS_PATH,
+    EPISODES_STATS_PATH,
     write_info,
     write_episode,
     write_episode_stats,
     embed_images,
     write_json,
+    write_jsonlines,
+    load_episodes_stats
 )
 from lerobot.common.datasets.lerobot_dataset import LeRobotDatasetMetadata
 
@@ -68,6 +71,22 @@ def _safe_write_parquet(ds: datasets.Dataset, target: Path) -> None:
         tmp_path.unlink()
     ds.to_parquet(tmp_path)
     tmp_path.replace(target)
+
+# updates the stats for a single episode
+def _overwrite_episode_stats(
+    dataset_dir: Path, episodes_stats: dict[int, dict]
+) -> None:
+    print("Updating episodes stats...")
+    eps_stats = load_episodes_stats(dataset_dir)
+    print(f"Current episodes stats: {eps_stats}")
+    eps_stats.update(episodes_stats)
+    print(f"New episodes stats: {eps_stats}")
+    # remove previous file
+    (dataset_dir / EPISODES_STATS_PATH).unlink(missing_ok=True)
+    
+    for ep_idx, stats in eps_stats.items():
+        write_episode_stats(ep_idx, stats, dataset_dir)
+
 
 ###############################################################################
 # Core operations
@@ -162,7 +181,8 @@ def trim_frames(dataset_dir: Path, ep_idx: int, range_expr: str) -> None:
     frame_dict = {c: _to_np(trimmed[c]) for c in trimmed.column_names}
     ep_stats = compute_episode_stats(frame_dict, meta.features)
     meta.episodes_stats[ep_idx] = ep_stats
-    write_episode_stats(ep_idx, ep_stats, meta.root)
+    # write_episode_stats(ep_idx, ep_stats, meta.root)
+    _overwrite_episode_stats(meta.root, meta.episodes_stats)
 
         # 5️⃣  Re‑encode video if dataset stores videos
     if meta.video_keys:
@@ -219,7 +239,7 @@ def update_stats(dataset_dir: Path, _meta_prefetched: LeRobotDatasetMetadata | N
     meta.stats = aggregate_stats(list(meta.episodes_stats.values()))
     py_stats = _to_py(meta.stats)
     (meta.root / STATS_PATH).unlink(missing_ok=True)
-    write_json(py_stats, meta.root / STATS_PATH)
+    write_jsonlines(py_stats, meta.root / STATS_PATH)
 
 ###############################################################################
 # CLI definitions
