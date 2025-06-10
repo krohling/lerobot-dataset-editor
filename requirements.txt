@@ -1,0 +1,20 @@
+# core CLI
+click>=8.1
+
+# table & dataset handling
+datasets>=2.18.0
+pyarrow>=15.0.0
+
+# math & image helpers
+numpy>=1.24
+pillow>=10.0
+
+# PyTorch stack (for decode/encode helpers)
+torch>=2.1
+torchvision>=0.16
+
+# video decoding
+pyav>=10.0.0
+
+# LeRobot library itself (install from GitHub)
+lerobot @ git+https://github.com/huggingface/lerobot.git
